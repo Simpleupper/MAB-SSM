@@ -327,7 +327,7 @@ class BasicResBlock(nn.Module):
 class SeparateConv3DBlock(nn.Module):
     def __init__(self, input_channels, kernel_size, padding_size):
         super().__init__()
-	reduced_channels = max(1, input_channels // 4)
+        reduced_channels = max(1, input_channels // 4)
 
         # 先用 1×1×1 卷积降维
         self.reduce_conv = nn.Conv3d(input_channels, reduced_channels, kernel_size=1, stride=1, padding=0, bias=False)
@@ -339,7 +339,7 @@ class SeparateConv3DBlock(nn.Module):
         self.conv_1_1_n = nn.Conv3d(reduced_channels, reduced_channels, (1,1,kernel_size), stride=1, padding=(0,0,padding_size), bias=False)
         self.conv_1_1_1 = nn.Conv3d(reduced_channels, reduced_channels, (1,1,1), stride=1, padding=(0,0,0), bias=False)
         
-        self.bn = nn.BatchNorm3d(input_channels)
+        self.bn = nn.BatchNorm3d(reduced_channels)
         self.relu = nn.ReLU(inplace=False)
 
 	# 输出恢复通道
@@ -388,8 +388,8 @@ class SkipMultiscaleAnisotropy3DBlock(nn.Module):
         self.avgpool3d = nn.AvgPool3d(kernel_size=(2,2,2), stride = 1, padding=(1,1,1))
         
         self.separateconv3Dblock_1 = SeparateConv3DBlock(input_channels, kernel_size=3, padding_size=1)
-        self.separateconv3Dblock_2 = SeparateConv3DBlock(input_channels, kernel_size=5, padding_size=2)
-        self.separateconv3Dblock_3 = SeparateConv3DBlock(input_channels, kernel_size=7, padding_size=3)
+        self.separateconv3Dblock_2 = SeparateConv3DBlock(input_channels, kernel_size=9, padding_size=4)
+        self.separateconv3Dblock_3 = SeparateConv3DBlock(input_channels, kernel_size=15, padding_size=7)
         
         self.attention = nn.Sequential(
             nn.Conv3d(4*input_channels, 1, kernel_size=(1,1,1)),
@@ -400,7 +400,7 @@ class SkipMultiscaleAnisotropy3DBlock(nn.Module):
         
     def compute_gradient(self, x):
         if not x.requires_grad:
-            return torch.zero_like(x)
+            return torch.zeros_like(x)
         
         x = torch.autograd.Variable(x, requires_grad=True)
         gradient_x = torch.autograd.grad(outputs=x.sum(), inputs=x, create_graph=True)[0]
@@ -495,7 +495,7 @@ class BasicRes_DWT_Block(nn.Module):
         # x = torch.cat([lll, hll, lhl, hhl, llh, hlh, lhh, hhh], dim=1)
         y = self.conv1(lll)
         
-        y = self.conv1(x)
+        # y = self.conv1(x)
         y = self.act1(self.norm1(y))  
         y = self.norm2(self.conv2(y))
         if self.conv3:
@@ -785,7 +785,7 @@ class UNetResDecoder(nn.Module):
                 output += np.prod([self.num_classes, *skip_sizes[-(s+1)]], dtype=np.int64)
         return output
     
-class UMambaBot(nn.Module):
+class MABSSM(nn.Module):
     def __init__(self,
                  input_channels: int,
                  n_stages: int,
@@ -864,7 +864,7 @@ class UMambaBot(nn.Module):
         return self.encoder.compute_conv_feature_map_size(input_size) + self.decoder.compute_conv_feature_map_size(input_size)
 
 
-def get_umamba_bot_3d_from_plans(
+def get_mab_ssm_3d_from_plans(
         plans_manager: PlansManager,
         dataset_json: dict,
         configuration_manager: ConfigurationManager,
@@ -878,10 +878,10 @@ def get_umamba_bot_3d_from_plans(
 
     label_manager = plans_manager.get_label_manager(dataset_json)
 
-    segmentation_network_class_name = 'UMambaBot'
-    network_class = UMambaBot
+    segmentation_network_class_name = 'MABSSM'
+    network_class = MABSSM
     kwargs = {
-        'UMambaBot': {
+        'MABSSM': {
             'conv_bias': True,
             'norm_op': get_matching_instancenorm(conv_op),
             'norm_op_kwargs': {'eps': 1e-5, 'affine': True},
