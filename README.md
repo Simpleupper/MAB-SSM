@@ -3,21 +3,21 @@
 ### Installation
 Install via pip (Recommended)
 
-# 1. Create and activate the environment
+1. Create and activate the environment
 conda create -n mab-ssm python=3.9 -y
 conda activate mab-ssm
 
-# 2. Clone the MAB-SSM repository
+2. Clone the MAB-SSM repository
 git clone https://github.com/Simpleupper/MAB-SSM.git
 cd MAB-SSM
 
-# 3. Install PyTorch for the CUDA version available on your system
-# See: https://pytorch.org/get-started/locally/
+3. Install PyTorch for the CUDA version available on your system
+See: https://pytorch.org/get-started/locally/
 
-# 4. Install the principal dependencies
+4. Install the principal dependencies
 pip install numpy nnunetv2 dynamic-network-architectures mamba-ssm
 
-# 5. Install the 3D wavelet-transform dependency
+5. Install the 3D wavelet-transform dependency
 git clone https://github.com/KeKsBoTer/torch-dwt.git
 pip install -e ./torch-dwt
 
